@@ -4,106 +4,32 @@ _This project is to be done in teams of 2._
 
 **NAME OF BOTH COLLABORATOR(S) HERE**
 
-**THE MASTERWORK YOU DREW FROM THE HAT:**
+**THE MASTERWORK YOU DREW FROM THE HAT:** EVE, WALL-E, 2008, - Light-eyes that changes shape to show curiosity, love, and alarm.
 
 ---
-
-One way to understand greatness is to look to the greats. Just as painters learn
-the technique and artistry of the old masters by recreating their paintings, so
-too shall we come to understand computer-mediated interaction by recreating the
-interactive masterworks of our time.
-
-This week, every team will draw a different masterwork from a hat. Some are
-conceptual pieces, some are historical works, some are modern-day products —
-but they all share one thing: **their central mode of interaction is carried by
-light.** Think of Tinker Bell in the original stage production of *Peter Pan*,
-represented by nothing more than a darting circle of light from an off-stage
-mirror. There was no actor playing Tinker Bell; she existed entirely through the
-way the other characters interacted with that light.
-
-Your job is to recreate the *interaction* of the piece you drew — not to build a
-museum-grade replica, but to stage the moment that makes it what it is. Someone
-who knows your piece should watch your recreation and recognize it instantly.
-Someone who has never heard of it should walk away understanding what it is
-famous for.
-
-You will do this using the interaction staging techniques we will use all semester: a
-storyboard, some acting, a phone standing in as a controllable light (the
-*Tinkerbelle* tool), a hidden human "wizard" driving it, a costume, and a
-recorded video.
-
-*Make sure you read all the instructions and understand the whole activity
-before starting!*
-
-## Prep
-
-To start, you will need:
-
-1. Read about Git [here](https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F).
-2. Set up your own Github "Lab Hub" by forking the [Interactive-Lab-Hub repository](https://github.com/IRL-CT/Interactive-Lab-Hub). To get lab updates, simply use [GitHub's "Sync fork" button](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork) when new content is available.
-
-3. Set up your `README.md` so it has your name and links to this lab. Learn to
-   format a README [here](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-4. **Draw your masterwork from the hat and write it at the top of this file.**
-   Whatever you drew is yours — lean into it.
-
-## Materials
-
-For this lab you will need:
-
-1. Paper, markers/pens, scissors
-2. A smartphone with a browser that can display a webpage (your stand-in "light")
-3. A computer to host the control webpage
-4. Found objects and materials to **costume your phone so it looks like the
-   device in your masterwork** — doll clothes, a paper lantern, a bottle, foil,
-   a cardboard shell, whatever it takes. Be resourceful.
-
-## Deliverables
-
-Submit all of the following in this lab folder of your Lab Hub, as links or
-uploaded files. **Each group member posts their own copy to their own Github repo**, even if the work is
-shared.
-
-1. A short **research write-up** of your masterwork (what it is, when, who made
-   it, and — most importantly — what the interaction is)
-2. **3 iterated storyboards** of the interaction in the masterwork
-5. A **video sketch** of your prototyped interaction
-6. Any **reflections** on the process
-
-Labs are due on Mondays. Make sure this page is linked from your main class hub
-page.
-
----
-
-# The Report
 
 ## Part 0. Know Your Master
 
-Before you prototype anything, get intimately acquainted with the piece you
-drew. Do real research. You are looking less for trivia than for the *shape of
-the interaction*:
+When EVE is first seen in the movie, she is hostile and dedicated to her task, but she is willing to take time off her directive and discover new things. When meeting WALL-E, she is wary of him and wants him out of trouble in her territory. However, she begins to warm up to him when learning about his curious personality. Once she sees how infatuated he was to her, she becomes more closer to him and makes it her top priority to protect him.
 
-- What inputs are available to the user? What responses does the work give?
-- Who is present, and how does the piece color the relationships between them?
-- What is the piece famous for? What are its strengths and its weaknesses?
-
-  Sometimes the details of how the interaction worked are lost in history. Try filling it in with your imagination!
-
-**Describe your masterwork here, in your own words. What is the core interaction
-someone would recognize it by?**
+The core interaction of EVE includes changing the shape of her eyes to show different emotions.
+- Curiosity: thin, upward-curving arcs
+- Love: soft, downward-curving crescents that look like upside-down smiles (⌒ ⌒)
+- Alarm: Slanted, sharp diagonal lines angled downward toward the center (\ /)
 
 ## Part A. Plan
 
 For your masterwork, reconstruct the interaction as a scene:
 
-- **Setting:** Where and when does this interaction happen? (a jungle, a kitchen,
-  a spaceship corridor, a nightclub, a harbor at night)
-- **Players:** Who is involved? Who else is present? Think through everyone in
-  the setting, not just the primary user.
-- **Activity:** What is happening between the players and the light?
-- **Goals:** What is each player trying to do?
+- **Setting:** A quiet corner of a cluttered room (standing in for Earth's trash-covered surface) — a desk or floor space with a few "junk" props scattered around (a box, some wires, a plant in a cup). Dim lighting so the phone's light reads clearly.
+- **Players:**EVE (the phone/light), WALL-E (a human actor holding/gesturing at the "light"), and implicitly the audience watching to see if the emotional arc reads clearly.
+- **Activity:** WALL-E discovers EVE and cautiously approaches. EVE first reacts with alarm (threat/scan mode), then curiosity as she studies this strange creature, then—once WALL-E shows her something small and sincere (like handing her an object)—shifts into love/warmth.
+- **Goals:** EVE wants to protect her directive, but is drawn to investigate anything unfamiliar. On the other hand, WALL-E wants connection. He is harmless, and keeps trying to show he means no harm. The audience, wants to see them become friends.
 
-**Describe your setting, players, activity, and goals here.**
+**Three storyboards**:
+1. WALL-E approaches — EVE's "eyes" snap to sharp downward diagonal lines (Alarm), body/light held rigid, WALL-E freezes
+2. WALL-E slowly holds out an object (e.g. a small plant/trinket) — EVE's eyes soften into thin upward arcs (Curiosity), leaning in slightly
+3. WALL-E does something endearing — EVE's eyes curve into the downward-curving crescent shape (Love), light warms/glows softer
 
 Now **sketch a 3 storyboards** of the interaction you are recreating. (The number may depend on the thing you drew, but stretch your thinking!) They
 don't need to be beautiful, but they must capture and communicate not only the behavior of the light, but how it affects
