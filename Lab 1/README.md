@@ -167,7 +167,9 @@ _EVE prototype when processing her emotion:_
 
 ## Record the Remix
 
-![Remix video sketch](files/remix_video_sketch.mp4)
+[Remix video sketch](https://drive.google.com/file/d/1jKzN6-oNTtOB2w9ZpVTArX0E8JiXUmTU/view?usp=sharing)
+
+Since my partner dropped this class, it's hard to finish this part with human interaction. Special thanks to _Monica Wei_ and _Regina Chang_ who helped me film this video and control EVE's eyes.
 
 ---
 
