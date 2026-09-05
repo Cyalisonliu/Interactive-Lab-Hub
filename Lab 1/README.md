@@ -97,6 +97,20 @@ wasn't clear.
 **Who were the other groups you kibitzed with? Add links to their project pages here.**
 **Summarize the feedback you got from your partners here.**
 
+1. <https://github.com/ctyaaaaao/Interactive-Lab-Hub/tree/Fall2026/Lab%201>
+2. <https://github.com/pallavi-srinivas/Interactive-Lab-Hub/blob/Fall2026/Lab%201/README.md>
+3. <https://github.com/alexa482/Interactive-Lab-Hub1/tree/Fall2026/Lab%201>
+
+- **Strengths (consistent across reviewers):**
+  - The cardboard costuming combined with the light effectively made the characters instantly recognizable as EVE and WALL-E
+  - The emotional arc reads clearly — viewers could follow what was happening without confusion
+
+- **Suggested improvements:**
+  - Add more sensory layers: One reviewer suggested adding sound effects to enhance EVE and WALL-E's expressiveness beyond just light
+  - Consider a human counterpart instead of WALL-E: having the light respond to a human, rather than another device, might be more intuitive and engaging for viewers to follow
+  - Expand the light-based interaction: One reviewer noted the eye-color/light interaction could go further — more back-and-forth light responses between the two characters, not just one-directional state changes
+  - Polish color choices and pacing: One reviewer suggested refining the color palette and tightening the editing for smoother overall flow
+
 ## Remix, Update, or Critique the Master
 
 Now that you understand your masterwork from the inside, respond to it. Do the
@@ -118,8 +132,44 @@ your response engages with what your master was really doing.
 **Document everything here — especially the storyboard and video. Photos of the
 prototype are great too.**
 
----
+## Ideas
 
+We've recognized that EVE's shapes are discrete and binary. So I considered two ways to soften that: (1) driving a smooth, code-based light transform in Tinkerbelle so the color itself animates between states, or (2) building a dedicated physical transition state — a fourth cutout, held for a beat between the named emotions, paired with its own color so the change reads as a real in-between moment rather than a hidden fade.
+
+We went with the second idea: it's buildable with materials we already have. It's not really a new cutout, just overlap two cardboard making it like a "fourth cutout" when EVE changes her emotions. This gives the transition its own readable beat instead of asking the audience to infer it from a blackout.
+
+Besides, We also decided to move EVE off her single blue eye-color and give each
+emotional state its own color, so the light itself — not just the eye shape —
+carries part of the feeling: **red** (alarm), **amber** (transition), **blue**
+(curiosity), **pink** (love).
+
+We considered adding sound (background hums/noise reflecting EVE's emotional
+state) as a second layer on top of this, but didn't carry it into this round's
+storyboard — it's a light/shape-and-color-only pass for now. Worth revisiting
+as a stretch goal if there's time before filming.
+
+## Plan
+
+In part2, we're introducing a human playing WALL-E (instead of a box stand-in) to give the interaction more life, and adding a literal fourth eye-shape — an amber **transition** cutout — that EVE's light passes through between any two emotional states, instead of snapping directly from one to the next. This **addresses the weakness** we named in Part 0 (discrete, binary eye-shapes with no blended in-between state) with something we can actually build: one more paperboard cutout, swapped through the same thread mechanism from Part D.
+
+## New, Five Storyboards
+
+1. **Alarm** (red) — Human walks in. EVE feels threatened and shows alarm.
+2. **Transition 1** (amber) — Human runs away to give her space. EVE's alarm begins to fade.
+3. **Curiosity** (blue) — Human presents a flower. EVE's eyes open with curiosity.
+4. **Transition 2** (amber) — Human puts down the flower. EVE watches, starting to feel trust.
+5. **Love** (pink) — Human sits closer beside her. EVE's eyes soften with love.
+
+![Five remix storyboard — Alarm, Transition 1, Curiosity, Transition 2, Love](files/storyboards_revised.png)
+
+_EVE prototype when processing her emotion:_
+![alt text](files/EVE.png)
+
+## Record the Remix
+
+![Remix video sketch](files/remix_video_sketch.mp4)
+
+---
 
 
 *Assignment lineage: this lab merges "Staging Interaction" (Interactive Lab Hub)
