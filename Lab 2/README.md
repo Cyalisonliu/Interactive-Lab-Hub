@@ -14,8 +14,6 @@ Be generous in acknowledging their contributions! And also recognizing any other
 
 1. ### Set up your Lab 2 Github
 
-At the start of lab Wednesday, ensure you have the latest lab content by updating your forked repository. 
-
 **📖 [Follow the step-by-step guide for safely updating your fork](pull_updates/README.md)**
 
 This guide covers how to pull updates without overwriting your completed work, handle merge conflicts, and recover if something goes wrong.
@@ -175,10 +173,46 @@ Another might be novel units of time. How do you measure a year? [In daylights? 
 
 We strongly discourage literal digital or analog clock display: Be creative.
 
+### Idea: Color Pomodoro Timer
 
-** Insert ideas, sketches, [Verplank diagrams](https://ccrma.stanford.edu/courses/250a-fall-2004/IDSketchbok.pdf)), storyboards for your ideas **
+Unlike the official pompdprp timer, this is a focus timer that tells time **only with color**. It uses nothing but the Pi and the MiniPiTFT: the full screen plus its two buttons.
 
+**Why color instead of numbers?**
 
+- **Glanceable, not readable.** Sometimes a countdown like `01:30` pulls your eyes and attention away from your work. This color timer can be read with peripheral vision: "still blue" means keep going, and you never have to look at it directly.
+- **Less clock-watching.** Without numbers, there's nothing to keep checking. The screen only asks you to act when the color changes.
+- **A signal to others.** A roommate can see "blue = focusing, don't interrupt" from across the room.
+- **Fits the hardware.** At 240×135, text is cramped, but a full-screen color is bright and readable from far away.
+
+**Reward:** Every finished focus session collects one color of the rainbow (red → orange → yellow → green → blue → indigo → violet) in a thin strip at the bottom of the screen. Seven sessions, about three hours of real focus, complete one rainbow, and the whole screen celebrates with a full rainbow. A half rainbow is still a good day!
+
+### How it behaves
+
+| State | Color on screen | What it means |
+|---|---|---|
+| Idle | Soft white | Ready; press A to start |
+| Focus (25 min) | Blue | Focus |
+| Wrap-up (last 2 min) | Amber, gently "breathing" | Finish your current thought |
+| Break (5 min) | Green | Stand up, look away, stretch |
+| Paused | Dim grey | Timer stopped |
+
+**Controls**
+
+- **Button A:** tap to start or pause.
+- **Button B:** hold for 2 seconds to **skip ahead** to the next session. The hold keeps a bumped button from ending a session by accident.
+
+### Storyboard
+
+![Color Pomodoro storyboard](imgs/storyboard.jpg)
+
+### Verplank diagram
+
+![Color Pomodoro Verplank diagram](imgs/verplank.png)
+
+### Plan for Part 2
+
+- **Start from something small:** Blue fill during focus, then green during break, with button A to start or pause. This only needs a color-mapping function and a timer inside the `while` loop of `screen_clock.py`.
+- **Possible later extensions (not required):** Flip the Pi face-down to start a session, like turning a phone over (IMU). Auto-pause when I leave my desk (proximity sensor).
 
 **Put the names of the people you gave feedback to here. (Even better, add links to their repos here!)**
 
