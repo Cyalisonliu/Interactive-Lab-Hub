@@ -184,7 +184,7 @@ Unlike the official pompdprp timer, this is a focus timer that tells time **only
 - **A signal to others.** A roommate can see "blue = focusing, don't interrupt" from across the room.
 - **Fits the hardware.** At 240×135, text is cramped, but a full-screen color is bright and readable from far away.
 
-**Reward:** Every finished focus session collects one color of the rainbow (red → orange → yellow → green → blue → indigo → violet) in a thin strip at the bottom of the screen. Seven sessions, about three hours of real focus, complete one rainbow, and the whole screen celebrates with a full rainbow. A half rainbow is still a good day!
+**Reward:** Every finished focus session collects one color of the rainbow (red → orange → yellow → green → blue → indigo → violet) in a thin strip at the bottom of the screen. Seven colors complete one rainbow, and the end-of-day summary shows the collected rainbow with a short tip. A half rainbow is still a good day!
 
 ### How it behaves
 
@@ -276,7 +276,7 @@ When a phase starts, the screen shows its name in big letters over the full-scre
 | Phase | Word shown on screen | Full-screen color |
 |---|---|---|
 | Focus | **FOCUS** | Solid blue |
-| Wrap-up (last 2 min of focus) | **WRAP UP** | Solid amber, gently breathing |
+| Wrap-up (after focus) | **WRAP UP** | Amber, gently breathing (brightness slowly dims and returns every 2 seconds) |
 | Break | **BREAK** | Solid green |
 | Paused | **PAUSED** | Solid grey |
 
@@ -291,17 +291,18 @@ On the idle screen, **tap B** to switch between two lengths. The choice is shown
 | **30 MIN** | 25 min | 5 min | 1 |
 | **60 MIN** | 45 min | 15 min | 2 |
 
-A **counter** (0–7) tracks the rainbow. A finished 30-minute cycle adds 1 color and a 60-minute cycle adds 2, so a longer session isn't punished. The counter stops at 7, and reaching 7 plays the full-screen rainbow.
+A **counter** (0–7) tracks the rainbow. A finished 30-minute cycle adds 1 color and a 60-minute cycle adds 2. The counter stops at 7. Reaching 7 opens the end-of-day summary when the cycle returns to idle.
+I chose the summary over a full-screen rainbow animation because the feedback asked to see the summary.
 
 **Skip rules** (hold B for 2 seconds during a session):
 
 - Skip during **blue focus** → return to idle, **no color** earned. This counts as a skipped focus session.
 - Skip during **amber wrap-up** → the session is basically done, so the color still counts.
-- Skip during **break** → back to idle. This counts as a skipped break.
+- Skip during **break** → back to idle. This counts.
 
 #### 3. End-of-day summary
 
-The summary appears automatically when the rainbow is complete, and I can also open it any time by **holding A for 2 seconds on the idle screen**. It shows the collected rainbow plus one short tip. If the rainbow is full, the summary starts with the celebration message. Then it shows the first tip below whose rule matches:
+The summary appears automatically when the rainbow is complete, and I can also open it any time by **holding A for 2 seconds on the idle screen**. It shows the collected rainbow plus one line of text: the first message below whose rule matches.
 
 | What the clock noticed | Tip on screen |
 |---|---|
@@ -310,12 +311,22 @@ The summary appears automatically when the rainbow is complete, and I can also o
 | 2+ focus sessions skipped during blue | *"Try shorter sessions"* |
 | Nothing above matches | *"Keep going tomorrow"* |
 
-To make this work, the program logs each finished or skipped session with its time of day. With only the screen and two buttons, the clock can't tell whether I actually got up during a break, so "ignored breaks" only counts breaks I skipped with B.
+To make this work, the program counts colors earned, skipped breaks, and focus sessions skipped during blue. With only the screen and two buttons, the clock can't tell whether I actually got up during a break, so "ignored breaks" only counts breaks I skipped with B.
+
+#### Updated Storyboards and Verplank diagram
+
+![Storyboard, Part 2](imgs/storyboard_part2.jpg)
+
+This version reflects the implemented behavior: the phase words, the breathing amber wrap-up, the 30/60 choice, and the summary screen in place of a full-screen rainbow.
+
+The metaphor changed too. The screen no longer fills up slowly. The new metaphor has two parts: an **"ON AIR" light** for right now (one solid color that tells me, and anyone nearby, what's happening) and a **sand jar** that gains one colored layer per finished session, filling into a rainbow over the day.
+
+![Color Pomodoro Verplank diagram, Part 2](imgs/verplank_part2.jpg)
 
 #### Build order
 
 1. **Barebones:** blue → green with A to start or pause, plus the phase words.
-2. **Core:** 30/60 selection, amber wrap-up, paused state, the hold-B skip, and the rainbow counter with its celebration.
+2. **Core:** 30/60 selection, amber wrap-up, paused state, hold-B skip, and the rainbow counter.
 3. **Extra:** session log and end-of-day summary with tips.
 
 #### Implementation and video test settings
@@ -329,14 +340,11 @@ shown in a video:
 | **60 MIN** | 22 seconds | 3 seconds | 5 seconds | 2 |
 
 Button B switches between 30 MIN and 60 MIN with a tap while idle. During a
-session, holding B for 2 seconds skips the current phase. A focus skip returns
-to idle without increasing the rainbow counter. The end-of-day summary shows
-the current rainbow strips and a tip; session time-of-day logging remains a
-future extension.
+session, holding B for 2 seconds skips the current phase. A focus skip returns to idle without increasing the rainbow counter. The amber wrap-up screen breathes between 100% and 70% brightness every 2 seconds. The end-of-day summary shows the current rainbow strips and a tip; session time-of-day logging remains a future extension.
 
 #### AI disclosure
 
-I used AI assistance to help implement my ideas into Pi display code. The Color Pomodoro concept, interaction goals, feature decisions, testing values, and final behavior were my own; I reviewed and tested the generated code on the Raspberry Pi.
+I used AI assistance to help implement my ideas into Pi display code. The Color Pomodoro concept, interaction goals, feature decisions, testing values, and final behavior were my own; I reviewed and tested the generated code on the Raspberry Pi. I also used AI to organize and edit the README text, and make rough draft figures. All storyboards and Verplank diagrams in this README (including `imgs/storyboard_part2.jpg` and `imgs/verplank_part2.jpg`) are my own drawings.
 
 
 \*\*\***Put a copy of your code in your Lab 2 Github repo.**\*\*\*
