@@ -216,6 +216,10 @@ Unlike the official pompdprp timer, this is a focus timer that tells time **only
 
 **Put the names of the people you gave feedback to here. (Even better, add links to their repos here!)**
 
+- https://github.com/Tzuyi-Wei/Interactive-Lab-Hub/tree/Fall2026/Lab%202
+- https://github.com/ctyaaaaao/Interactive-Lab-Hub/blob/Fall2026/Lab%202
+- https://github.com/vd269-dot/Vasudha-Lab-Hub/tree/Fall2026/Lab%202
+
 # Lab 2 Part 2
 
 ## Prep 
@@ -224,6 +228,12 @@ Unlike the official pompdprp timer, this is a focus timer that tells time **only
 
 2. Look at and give feedback on the Part E. for at least 3 other people in the class and get 3 people to comment on your Part E!)
 **Put the feedback for your ideas here.**
+
+1. "The overall design is nicely minimalist, and I love the rainbow display. It's a great draw that keeps users engaged. However, I'd suggest making it more intuitive (like add simple words), as it might be hard for people to tell which color corresponds to which function."
+2. "It uses color to let users know whether they need to continue focusing, while retaining the characteristics of the Pomodoro Technique... However, when users only want to focus for an hour, it seems the only option is to use the pause function."
+3. "A great idea to less stressfully manage time! The end of the day summary could maybe add suggestions so that users could start modifying their habits."
+
+See [Updated plan (based on feedback)](#updated-plan-based-on-feedback) below.
 
 ## Update your Lab Hub
 
@@ -254,6 +264,68 @@ After that, Git will ask you to login to your GitHub account to push the updates
 Do take advantage of having done the previous iteration to refine and simplify your design.
 
 ** Insert any updates ideas, sketches, [Verplank diagrams](https://ccrma.stanford.edu/courses/250a-fall-2004/IDSketchbok.pdf))!, storyboards for your ideas **
+
+### Updated plan (based on feedback)
+
+The three pieces of feedback asked for clearer color meanings, more than one session length, and a more useful end-of-day summary. I kept the focus screen plain color and added information only at moments when I'm not focusing: phase changes, the idle screen, and the end of the day.
+
+#### 1. Words at every phase change
+
+When a phase starts, the screen shows its name in big letters for about 3 seconds. After that, the whole screen is filled with the phase color.
+
+| Phase | Word shown first | Then the screen is |
+|---|---|---|
+| Focus | **FOCUS** | Solid blue |
+| Wrap-up (last 2 min of focus) | **WRAP UP** | Solid amber, gently breathing |
+| Break | **BREAK** | Solid green |
+| Paused | **PAUSED** | Solid grey |
+
+New users learn what each color means from the word, and once they know it, the color alone is enough.
+
+#### 2. Two session lengths
+
+On the idle screen, **tap B** to switch between two lengths. The choice is shown in words (**30 MIN** / **60 MIN**). Tap A to start.
+
+| Length | Focus (incl. 2 min wrap-up) | Break | Rainbow colors earned |
+|---|---|---|---|
+| **30 MIN** | 25 min | 5 min | 1 |
+| **60 MIN** | 45 min | 15 min | 2 |
+
+A **counter** (0–7) tracks the rainbow. A finished 30-minute cycle adds 1 color and a 60-minute cycle adds 2, so a longer session isn't punished. The counter stops at 7, and reaching 7 plays the full-screen rainbow.
+
+**Skip rules** (hold B for 2 seconds during a session):
+
+- Skip during **blue focus** → go straight to the break, **no color** earned. This counts as a skipped focus session.
+- Skip during **amber wrap-up** → the session is basically done, so the color still counts.
+- Skip during **break** → back to idle. This counts as a skipped break.
+
+#### 3. End-of-day summary
+
+The summary appears automatically when the rainbow is complete, and I can also open it any time by **holding A for 2 seconds on the idle screen**. It shows the collected rainbow plus one short tip. If the rainbow is full, the summary starts with the celebration message. Then it shows the first tip below whose rule matches:
+
+| What the clock noticed | Tip on screen |
+|---|---|
+| Full rainbow (7 colors) | *"Nice! Same plan tomorrow?"* |
+| 2+ skipped breaks | *"Try taking your breaks"* |
+| 2+ focus sessions skipped during blue | *"Try shorter sessions"* |
+| Most colors earned before noon | *"Mornings work for you"* |
+| Nothing above matches | *"Keep going tomorrow"* |
+
+To make this work, the program logs each finished or skipped session with its time of day. With only the screen and two buttons, the clock can't tell whether I actually got up during a break, so "ignored breaks" only counts breaks I skipped with B.
+
+#### Build order
+
+流程：一整輪結束才回 idle
+
+Idle（白）→ Focus（藍）→ Wrap-up（琥珀）→ Break（綠）→ 回到 Idle（白）
+
+Focus 到 Wrap-up：自動接上。 琥珀色是專心的最後 2 分鐘，不算另一個獨立的段落。
+Wrap-up 到 Break：自動接上。 螢幕先顯示 BREAK，再變成綠色。
+Break 結束才回 Idle。 這時彩虹多一個顏色，等你按 A 開始下一輪，或按 B 換 30/60。
+
+1. **Barebones:** blue → green with A to start or pause, plus the phase words.
+2. **Core:** 30/60 selection, amber wrap-up, paused state, the hold-B skip, and the rainbow counter with its celebration.
+3. **Extra:** session log and end-of-day summary with tips.
 
 
 \*\*\***Put a copy of your code in your Lab 2 Github repo.**\*\*\*
