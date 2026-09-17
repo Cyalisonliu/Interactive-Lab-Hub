@@ -175,7 +175,7 @@ We strongly discourage literal digital or analog clock display: Be creative.
 
 ### Idea: Color Pomodoro Timer
 
-Unlike the official pompdprp timer, this is a focus timer that tells time **only with color**. It uses nothing but the Pi and the MiniPiTFT: the full screen plus its two buttons.
+Unlike the official pomodoro timer, this is a focus timer that tells time **only with color**. It uses nothing but the Pi and the MiniPiTFT: the full screen plus its two buttons.
 
 **Why color instead of numbers?**
 
@@ -249,15 +249,7 @@ Start small, pick just one element of your overall idea, just to show you have a
 
 \*\*\***Take a video of your barely modified PiClock.**\*\*\*
 
-After you edit and work on the scripts for Lab 2, the files should be upload back to your own GitHub repo! You can push to your personal github repo by adding the files here, commiting and pushing.
-
-```
-(venv) pi@raspberrypi:~/Interactive-Lab-Hub/Lab 2 $ git add .
-(venv) pi@raspberrypi:~/Interactive-Lab-Hub/Lab 2 $ git commit -m 'your commit message here'
-(venv) pi@raspberrypi:~/Interactive-Lab-Hub/Lab 2 $ git push
-```
-
-After that, Git will ask you to login to your GitHub account to push the updates online, you will be asked to provide your GitHub user name and password. Remember to use the "Personal Access Tokens" you set up in Part A as the password instead of your account one! Go on your GitHub repo with your laptop, you should be able to see the updated files from your Pi!
+[My barely modified PiClock](https://drive.google.com/file/d/1y3FRHuzFFKJnex_oeZBhr6-2C3Z_IKp-/view?usp=sharing)
 
 ## Now, make your own PiClock
 
@@ -346,14 +338,8 @@ session, holding B for 2 seconds skips the current phase. A focus skip returns t
 
 I used AI assistance to help implement my ideas into Pi display code. The Color Pomodoro concept, interaction goals, feature decisions, testing values, and final behavior were my own; I reviewed and tested the generated code on the Raspberry Pi. I also used AI to organize and edit the README text, and make rough draft figures. All storyboards and Verplank diagrams in this README (including `imgs/storyboard_part2.jpg` and `imgs/verplank_part2.jpg`) are my own drawings.
 
-
 \*\*\***Put a copy of your code in your Lab 2 Github repo.**\*\*\*
 
 \*\*\***Take a video of your PiClock.**\*\*\*
 
-
-As always, make sure you document contributions and ideas from others (and AI) explicitly in your writeup.
-
-You are permitted (but not required) to work in groups and share a turn in; you are expected to make equal contribution on any group work you do, and N people's group project should look like N times the work of a single person's lab.  Make sure the page for the group turn in is linked to your personal Interactive Lab Hub page. 
-
-
+[My PiClock - Color Pomodoro Timer](https://drive.google.com/file/d/1C3atAeCi3P_jkis5Mp565iyCQlv8QasT/view?usp=sharing)
