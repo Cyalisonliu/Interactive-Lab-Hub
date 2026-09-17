@@ -271,9 +271,9 @@ The three pieces of feedback asked for clearer color meanings, more than one ses
 
 #### 1. Words at every phase change
 
-When a phase starts, the screen shows its name in big letters for about 3 seconds. After that, the whole screen is filled with the phase color.
+When a phase starts, the screen shows its name in big letters over the full-screen phase color. The letters stay visible, so the meaning remains clear without making the color dark or difficult to notice.
 
-| Phase | Word shown first | Then the screen is |
+| Phase | Word shown on screen | Full-screen color |
 |---|---|---|
 | Focus | **FOCUS** | Solid blue |
 | Wrap-up (last 2 min of focus) | **WRAP UP** | Solid amber, gently breathing |
@@ -295,7 +295,7 @@ A **counter** (0–7) tracks the rainbow. A finished 30-minute cycle adds 1 colo
 
 **Skip rules** (hold B for 2 seconds during a session):
 
-- Skip during **blue focus** → go straight to the break, **no color** earned. This counts as a skipped focus session.
+- Skip during **blue focus** → return to idle, **no color** earned. This counts as a skipped focus session.
 - Skip during **amber wrap-up** → the session is basically done, so the color still counts.
 - Skip during **break** → back to idle. This counts as a skipped break.
 
@@ -308,24 +308,35 @@ The summary appears automatically when the rainbow is complete, and I can also o
 | Full rainbow (7 colors) | *"Nice! Same plan tomorrow?"* |
 | 2+ skipped breaks | *"Try taking your breaks"* |
 | 2+ focus sessions skipped during blue | *"Try shorter sessions"* |
-| Most colors earned before noon | *"Mornings work for you"* |
 | Nothing above matches | *"Keep going tomorrow"* |
 
 To make this work, the program logs each finished or skipped session with its time of day. With only the screen and two buttons, the clock can't tell whether I actually got up during a break, so "ignored breaks" only counts breaks I skipped with B.
 
 #### Build order
 
-流程：一整輪結束才回 idle
-
-Idle（白）→ Focus（藍）→ Wrap-up（琥珀）→ Break（綠）→ 回到 Idle（白）
-
-Focus 到 Wrap-up：自動接上。 琥珀色是專心的最後 2 分鐘，不算另一個獨立的段落。
-Wrap-up 到 Break：自動接上。 螢幕先顯示 BREAK，再變成綠色。
-Break 結束才回 Idle。 這時彩虹多一個顏色，等你按 A 開始下一輪，或按 B 換 30/60。
-
 1. **Barebones:** blue → green with A to start or pause, plus the phase words.
 2. **Core:** 30/60 selection, amber wrap-up, paused state, the hold-B skip, and the rainbow counter with its celebration.
 3. **Extra:** session log and end-of-day summary with tips.
+
+#### Implementation and video test settings
+
+The current Pi prototype uses shorter durations so the complete behavior can be
+shown in a video:
+
+| Selection | Focus | Wrap-up | Break | Colors earned |
+|---|---:|---:|---:|---:|
+| **30 MIN** | 10 seconds | 2 seconds | 3 seconds | 1 |
+| **60 MIN** | 22 seconds | 3 seconds | 5 seconds | 2 |
+
+Button B switches between 30 MIN and 60 MIN with a tap while idle. During a
+session, holding B for 2 seconds skips the current phase. A focus skip returns
+to idle without increasing the rainbow counter. The end-of-day summary shows
+the current rainbow strips and a tip; session time-of-day logging remains a
+future extension.
+
+#### AI disclosure
+
+I used AI assistance to help implement my ideas into Pi display code. The Color Pomodoro concept, interaction goals, feature decisions, testing values, and final behavior were my own; I reviewed and tested the generated code on the Raspberry Pi.
 
 
 \*\*\***Put a copy of your code in your Lab 2 Github repo.**\*\*\*

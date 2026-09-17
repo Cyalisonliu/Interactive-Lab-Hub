@@ -1,12 +1,13 @@
-from time import strftime, sleep
-import subprocess
+from time import monotonic, sleep
 import digitalio
 import board
 from PIL import Image, ImageDraw, ImageFont
 import adafruit_rgb_display.st7789 as st7789
 
+from pomodoro_logic import PomodoroState, RAINBOW_COLORS, tick
+
 # Configuration for CS and DC pins (these are FeatherWing defaults on M0/M4):
-cs_pin = digitalio.DigitalInOut(board.D5) 
+cs_pin = digitalio.DigitalInOut(board.D5)
 dc_pin = digitalio.DigitalInOut(board.D25)
 reset_pin = None
 
@@ -39,34 +40,65 @@ rotation = 90
 # Get drawing object to draw on image.
 draw = ImageDraw.Draw(image)
 
-# Draw a black filled box to clear the image.
-draw.rectangle((0, 0, width, height), outline=0, fill=(0, 0, 0))
-disp.image(image, rotation)
-# Draw some shapes.
-# First define some constants to allow easy resizing of shapes.
-padding = -2
-top = padding
-bottom = height - padding
-# Move left to right keeping track of the current x position for drawing shapes.
-x = 0
-
-# Alternatively load a TTF font.  Make sure the .ttf font file is in the
-# same directory as the python script!
-# Some other nice fonts to try: http://www.dafont.com/bitmap.php
-font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18)
+font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+summary_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
 
 # Turn on the backlight
 backlight = digitalio.DigitalInOut(board.D22)
 backlight.switch_to_output()
 backlight.value = True
 
-while True:
-    # Draw a black filled box to clear the image.
-    draw.rectangle((0, 0, width, height), outline=0, fill=0)
+# Button A is active-low because of the internal pull-up.
+buttonA = digitalio.DigitalInOut(board.D23)
+buttonA.switch_to_input(pull=digitalio.Pull.UP)
 
-    current_time = strftime("%m/%d/%Y %H:%M:%S")
-    draw.text((width//2, height//2), current_time, font=font, fill="#FFFFFF", anchor="mm")
+# Button B: hold for HOLD_DURATION seconds to reset the timer to idle.
+buttonB = digitalio.DigitalInOut(board.D24)
+buttonB.switch_to_input(pull=digitalio.Pull.UP)
+
+
+# Test profile: 30 MIN uses focus=10, wrap=2, break=3.
+# Tap B while idle to switch to the 60 MIN profile.
+state = PomodoroState(session_minutes=30)
+
+while True:
+    now = monotonic()
+    a_pressed = not buttonA.value
+    b_pressed = not buttonB.value
+    tick(state, now, a_pressed, b_pressed)
+
+    display_phase = state.display_phase()
+    display_text = state.display_text()
+    if display_phase == "WRAP":
+        display_text = "WRAP UP"
+
+    if display_phase == "RAINBOW":
+        band_height = height // len(RAINBOW_COLORS)
+        for index, color in enumerate(RAINBOW_COLORS):
+            top = index * band_height
+            bottom = height if index == len(RAINBOW_COLORS) - 1 else (index + 1) * band_height
+            draw.rectangle((0, top, width, bottom), fill=color)
+    else:
+        draw.rectangle((0, 0, width, height), outline=0, fill=state.color())
+
+    text_color = "#000000" if display_phase == "IDLE" else "#FFFFFF"
+    if state.show_summary:
+        draw.text(
+            (width // 2, height // 2 - 20),
+            state.summary_lines()[0],
+            font=summary_font,
+            fill=text_color,
+            anchor="mm",
+        )
+        strip_top = height - 18
+        strip_width = width // len(RAINBOW_COLORS)
+        for index, color in enumerate(state.rainbow_colors()):
+            left = index * strip_width
+            right = width if index == len(RAINBOW_COLORS) - 1 else (index + 1) * strip_width
+            draw.rectangle((left, strip_top, right, height), fill=color)
+    else:
+        draw.text((width // 2, height // 2), display_text, font=font, fill=text_color, anchor="mm")
 
     # Display image.
     disp.image(image, rotation)
-    sleep(1)
+    sleep(0.05)
