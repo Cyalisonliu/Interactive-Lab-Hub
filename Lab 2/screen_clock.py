@@ -72,14 +72,8 @@ while True:
     if display_phase == "WRAP":
         display_text = "WRAP UP"
 
-    if display_phase == "RAINBOW":
-        band_height = height // len(RAINBOW_COLORS)
-        for index, color in enumerate(RAINBOW_COLORS):
-            top = index * band_height
-            bottom = height if index == len(RAINBOW_COLORS) - 1 else (index + 1) * band_height
-            draw.rectangle((0, top, width, bottom), fill=color)
-    else:
-        draw.rectangle((0, 0, width, height), outline=0, fill=state.color())
+    # state.color(now) makes the amber wrap-up screen "breathe".
+    draw.rectangle((0, 0, width, height), outline=0, fill=state.color(now))
 
     text_color = "#000000" if display_phase == "IDLE" else "#FFFFFF"
     if state.show_summary:

@@ -3,6 +3,8 @@
 # so it can be unit tested without a Pi/display attached, and so new
 # phases/rules can be added here without touching the display loop.
 
+import math
+
 SESSION_CONFIG = {
     30: {"focus": 10, "wrap": 2, "break": 3},
     60: {"focus": 22, "wrap": 3, "break": 5},
@@ -11,6 +13,8 @@ FOCUS_DURATION = SESSION_CONFIG[30]["focus"]
 BREAK_DURATION = SESSION_CONFIG[30]["break"]
 WRAP_DURATION = SESSION_CONFIG[30]["wrap"]
 HOLD_DURATION = 2  # seconds to hold Button B to reset to idle, for A to show counter
+WRAP_BREATH_PERIOD = 2.0  # seconds for one full bright -> dim -> bright breath
+WRAP_BREATH_MIN = 0.7     # dimmest brightness during the breath (1.0 = full)
 RAINBOW_COLORS = (
     (220, 40, 40),
     (245, 130, 30),
@@ -52,7 +56,8 @@ class PomodoroState:
         self._a_pressed_at = None
         self._a_hold_handled = False
         self.show_summary = False
-        self.show_rainbow = False
+        self.colors_awarded = False  # this cycle's colors were already added
+        self._rainbow_just_completed = False
         self._b_pressed_at = None
         self._b_hold_handled = False
         self._prev_b_pressed = False
@@ -70,8 +75,6 @@ class PomodoroState:
     def display_phase(self):
         if self.show_summary:
             return "SUMMARY"
-        if self.show_rainbow:
-            return "RAINBOW"
         return "PAUSED" if self.paused else self.phase
 
     def display_text(self):
@@ -81,10 +84,18 @@ class PomodoroState:
             return f"{self.session_minutes} MIN"
         return self.display_phase()
 
-    def color(self):
-        if self.display_phase() in ("RAINBOW", "SUMMARY"):
-            return (35, 35, 35)
-        return PHASE_COLORS[self.display_phase()]
+    def color(self, now=None):
+        phase = self.display_phase()
+        if phase == "SUMMARY":
+            return PHASE_COLORS["COUNTER"]
+        base = PHASE_COLORS[phase]
+        if phase != "WRAP" or now is None or self.phase_started_at is None:
+            return base
+        # Wrap-up "breathes": full brightness at the start of each breath,
+        # dimmest halfway through.
+        angle = 2 * math.pi * (now - self.phase_started_at) / WRAP_BREATH_PERIOD
+        level = WRAP_BREATH_MIN + (1 - WRAP_BREATH_MIN) * (0.5 + 0.5 * math.cos(angle))
+        return tuple(round(channel * level) for channel in base)
 
     def summary_lines(self):
         lines = []
@@ -101,16 +112,37 @@ class PomodoroState:
     def rainbow_colors(self):
         return RAINBOW_COLORS[:self.counter]
 
-    def finish_cycle(self):
+    def start_focus(self, now):
+        self.phase = "FOCUS"
+        self.phase_started_at = now
+        self.paused = False
+        self.colors_awarded = False
+
+    def award_colors(self):
+        """Add this cycle's rainbow colors once (30 MIN: 1, 60 MIN: 2)."""
+        if self.colors_awarded:
+            return
+        self.colors_awarded = True
+        full = len(RAINBOW_COLORS)
+        before = self.counter
         colors_earned = 2 if self.session_minutes == 60 else 1
-        self.counter = min(len(RAINBOW_COLORS), self.counter + colors_earned)
+        self.counter = min(full, self.counter + colors_earned)
+        if before < full and self.counter == full:
+            self._rainbow_just_completed = True
+
+    def return_to_idle(self):
         self.phase = "IDLE"
         self.phase_started_at = None
         self.paused = False
         self.paused_remaining = None
-        if self.counter == len(RAINBOW_COLORS):
-            self.show_rainbow = True
+        if self._rainbow_just_completed:
+            # Rainbow finished this cycle: open the summary once back at idle.
+            self._rainbow_just_completed = False
             self.show_summary = True
+
+    def finish_cycle(self):
+        self.award_colors()
+        self.return_to_idle()
 
 
 def handle_button_a(state, now, a_pressed):
@@ -130,11 +162,8 @@ def handle_button_a(state, now, a_pressed):
             print("Button A pressed: toggling session")
             if state.show_summary:
                 state.show_summary = False
-                state.show_rainbow = False
             elif state.phase == "IDLE":
-                state.phase = "FOCUS"
-                state.phase_started_at = now
-                state.paused = False
+                state.start_focus(now)
             elif state.paused:
                 elapsed_before_pause = state.phase_duration - state.paused_remaining
                 state.phase_started_at = now - elapsed_before_pause
@@ -144,7 +173,6 @@ def handle_button_a(state, now, a_pressed):
                 state.paused = True
         if not state._a_hold_handled:
             state.show_summary = False
-            state.show_rainbow = False
         state._a_pressed_at = None
         state._a_hold_handled = False
     state._prev_a_pressed = a_pressed
@@ -158,21 +186,22 @@ def handle_button_b(state, now, b_pressed, hold_duration=HOLD_DURATION):
             state._b_pressed_at = now
         elif not state._b_hold_handled and now - state._b_pressed_at >= hold_duration:
             print("Button B held for", hold_duration, "seconds")
+            state.show_summary = False
             if state.phase == "FOCUS":
+                # Skipped before wrap-up: no color.
                 state.skipped_focus_sessions += 1
-                state.phase = "IDLE"
-                state.phase_started_at = None
+                state.return_to_idle()
             elif state.phase == "WRAP":
+                # Focus is basically done, so the color counts now.
+                state.award_colors()
                 state.phase = "BREAK"
                 state.phase_started_at = now
+                state.paused = False
+                state.paused_remaining = None
             elif state.phase == "BREAK":
+                # Keeps any color already earned by skipping wrap-up.
                 state.skipped_breaks += 1
-                state.phase = "IDLE"
-                state.phase_started_at = None
-            state.paused = False
-            state.paused_remaining = None
-            state.show_summary = False
-            state.show_rainbow = False
+                state.return_to_idle()
             state._b_hold_handled = True
     elif state._prev_b_pressed:
         if not state._b_hold_handled and state.phase == "IDLE":
