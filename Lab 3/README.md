@@ -108,8 +108,11 @@ The demo script also shows `--output-raw`, which streams audio to the speaker as
 
 \*\***Write your own shell file to use your favorite of these TTS engines to have your Pi greet you by name.**\*\*
 (This shell file should be saved to your own repo for this lab.)
+The shell file I wrote is [here](speech-scripts/my_greeting.sh)
 
 \*\***Then answer: Is the same greeting, in these different voices, the same greeting? Describe one concrete way the voice changed what the utterance seemed to mean or who seemed to be speaking.**\*\*
+The words were the same, but the greeting did not feel identical. I feel the espeak sounded very robotic and not easy to understand beceause the pause is not natural.
+Piper sounded a little bit warmer and natural. For me, espeack is like a robot system reading notification, while Piper is more like a personal assistant.
 
 ## B. Speech to Text
 
