@@ -134,7 +134,22 @@ Available sizes, smallest first: `tiny.en`, `base.en`, `small.en`, `medium.en`. 
 
 \*\***Record a few seconds of your own speech (`arecord -d 5 -f cd -c 1 -r 16000 test.wav`) and transcribe it with at least two model sizes. Report the real-time factor for each. At what point does the accuracy improvement stop being worth the delay, for a system that has to answer you?**\*\*
 
+
+![result using tiny.en](imgs/tiny.png)
+![result using base.en](imgs/base.png)
+![result using small.en](imgs/small.png)
+
+The results were:
+- Tiny.en: real-time factor = 0.18x, transcription time: 0.90s
+- Base.en: real-time factor = 0.33x, transcription time: 1.67s
+- Small.en: real-time factor = 0.98x, transcription time: 4.91s
+The transcript for all was the same: “Today is Sunday.” The main difference was latency that larger model was much slower. When we reached small.en, I start to feel an noticeable delayed. For a system that has to answer quickly, the accuracy improvement from tiny.en to base.en is probably worth it, but the jump to small.en is not worth the extra delay because it takes almost 5 seconds to transcribe a 5-second recording, which is a real-time factor of about 1.0x.
+
 \*\***Write your own script that verbally asks for a numerical input (a phone number, zipcode, number of pets) and records the answer the respondent provides.**\*\* Numbers are a good stress test — transcription systems make characteristic errors on digit strings, and you will want to know what they are before you design around them.
+
+![Tree models output](imgs/zip_code_result.png)
+
+The system recognized the zip code correctly, but the tiny model inserted spaces between digits (for example, “1 0 0 4 4” instead of “10044”). This may explain why numeric inputs need post-processing or confirmation in a conversational system.
 
 ## C. Turn-taking: knowing when someone has stopped talking
 
@@ -156,7 +171,8 @@ Speak, pause, and watch it transcribe. Now change the endpointing threshold — 
 
 \*\***Try both extremes, and something in between. Describe what each one feels like to talk to. Note specifically: at 0.2s, what kinds of normal speech get cut off? At 1.5s, what does the delay make the system seem like?**\*\*
 
-There is no correct value. A system that takes drink orders and a system that listens to someone think out loud want very different thresholds, and the right one depends on what your users are doing with their pauses.
+I preferred the 0.2-second threshold system. It felt more responsive and natural. The 1.5-second threshold felt much slower and made the device seem hesitant or delayed. I feel like I have to stop my sentence and pause to make it start transcribing. 
+However, at 0.2s, short pauses inside normal speech when I was still thinking about the following sentences were sometimes treated as the end of my turn, causing the system to cut off phrases mid-sentence. At 1.5s, the delay, in my opinion, was awkward that made the device seem less conversational.
 
 ### The complete loop
 
