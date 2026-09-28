@@ -171,7 +171,7 @@ Speak, pause, and watch it transcribe. Now change the endpointing threshold — 
 
 \*\***Try both extremes, and something in between. Describe what each one feels like to talk to. Note specifically: at 0.2s, what kinds of normal speech get cut off? At 1.5s, what does the delay make the system seem like?**\*\*
 
-I preferred the 0.2-second threshold system. It felt more responsive and natural. The 1.5-second threshold felt much slower and made the device seem hesitant or delayed. I feel like I have to stop my sentence and pause to make it start transcribing. 
+I preferred the 0.2-second threshold system. It felt more responsive and natural. The 1.5-second threshold felt much slower and made the device seem hesitant or delayed. I feel like I have to stop my sentence and pause to make it start transcribing.
 However, at 0.2s, short pauses inside normal speech when I was still thinking about the following sentences were sometimes treated as the end of my turn, causing the system to cut off phrases mid-sentence. At 1.5s, the delay, in my opinion, was awkward that made the device seem less conversational.
 
 ### The complete loop
@@ -186,20 +186,84 @@ However, at 0.2s, short pauses inside normal speech when I was still thinking ab
 
 Storyboard and/or use a Verplank diagram to design a speech-enabled device. (Stuck? Make a device that talks for dogs. If that is too stupid, find an application that is better than that.)
 
-\*\***Post your storyboard and diagram here.**\*\*
+![Storyboard](imgs/storyboard.jpg)
 
-Write out what you imagine the dialogue to be. Use cards, post-its, or whatever method helps you develop alternatives or group responses.
+This storyboard shows a speech-enabled device that lets the user choose an animal companion and have a short conversation with it. The device is designed to provide a simple feeling of companionship when the user wants to talk.
 
-\*\***Please describe and document your process.**\*\*
+1. **Wake up:** The device asks what the user would like to talk about.
+2. **Choose an animal:** The user says an animal, such as “cat” or “dog.” The device displays a listening state while waiting for the answer.
+3. **Pet appears:** After recognizing the animal, the device displays the selected pet and introduces it.
+4. **Conversation:** The user and the pet exchange several short messages. The device waits until the user has finished speaking before responding.
+5. **Silence:** If no speech is detected for approximately 1.5 seconds, the device asks whether the user is still there.
+6. **Goodbye:** The device ends the interaction when the user says goodbye or does not respond.
 
-Your script should include the pauses. Where does your device wait, and for how long? You now know from Part C that this is a parameter you have to choose, not something that happens for free.
+The first listening pause is ~0.5 seconds after the device asks the user to choose an animal. During the conversation, the device waits ~0.8–1.0 seconds after the user stops speaking before responding. A longer pause of ~1.5 seconds is used to detect silence. I chose these timings because a very short pause might interrupt the user's sentence, and a very long pause could make the device feel slow or unresponsive.
+
+### Imagined Dialogue
+
+The main character in my original design is a cat named Mochi. The interaction is designed to feel like a small moment of companionship after a tiring day. The device uses different pauses for different purposes: a 1.5-second pause detects when the user has finished speaking, a 1-second pause makes the cat's response feel considered, and longer 6- to 8-second pauses give the user time to answer before the device follows up.
+
+**Device (Start):** "Hi there! Who do you want to talk to today: a cat, a dog, or a bird?"
+[wait up to 6 s for an answer]
+
+- If no answer: "You can say cat, dog, or bird!" [wait 6 s, then go back to sleep]
+- If the word isn't recognized: "Hmm, I only have cats, dogs, and birds right now. Which one?"
+
+**User:** "A cat!"
+
+*[1.5 seconds of silence: the device decides that the user has finished speaking.]*
+
+*[The screen displays the cat.]*
+
+**Cat:** "Meow~ I'm Mochi! How was your day?"
+
+*[The device waits up to 6 seconds for the user's response.]*
+
+**User:** "Kind of tiring. I had an exam."
+
+*[1-second thinking pause. This prevents the response from feeling instant or robotic.]*
+
+**Cat:** "Aww... exams sound scary. Want me to purr for you?"
+
+*[The device waits up to 6 seconds.]*
+
+**User:** "Yes."
+
+*[The device plays a purring sound for 3 seconds.]*
+
+**Cat:** "Feel better?"
+
+*[If the user says no, the cat responds: "Okay! Want to hear what I did today instead?"]*
+
+**User:** *[silence]*
+
+*[After 8 seconds of silence:]*
+
+**Cat:** "Mrrp? Are you still there?"
+
+*[The device waits 8 more seconds. If the user is still silent, it says: "I'll take a nap then. Wake me anytime!" and returns to sleep mode.]*
+
+**User:** "Bye, Mochi."
+
+**Cat:** "Bye! Come back and pick a friend anytime!"
+
+*[After 3 seconds, the device returns to the start screen.]*
+
+### Alternative Animal Voices
+
+The same interaction can use different animal personalities:
+
+- **Bird, Kiwi:** "Tweet! I'm Kiwi! Say something and I'll copy you!" The bird repeats the user's last word to make the interaction playful.
 
 ## E. Acting out the dialogue
 
 Find a partner, and *without sharing the script with your partner* try out the dialogue you've designed, where you (as the device designer) act as the device you are designing. Please record this interaction (for example, using Zoom's record feature).
 
+[Recording of acting out the dialogue](https://drive.google.com/file/d/1Mk-RmBJqNQyk53J-MjLdzFbNQmFkk6qu/view?usp=sharing)
+
 \*\***Describe if the dialogue seemed different than what you imagined when it was acted out, and how.**\*\*
 
+The dialogue felt different when I acted it out with a dog instead of a cat. I originally designed the interaction around a cat, so I expected the device to pause, observe, and respond in a more distant way. However, the dog should create a different expectation: more energetic, friendly, and eager to react. As a result, some of the pauses felt awkward rather than intentional. I realized that changing the animal changed not only the character, but also the expected timing and turn-taking pattern.
 
 ---
 
