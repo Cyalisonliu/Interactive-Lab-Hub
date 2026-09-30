@@ -278,6 +278,101 @@ For Part 2, you will redesign the interaction with the speech-enabled device usi
 3. Make a new storyboard, diagram and/or script based on these reflections.
 4. (optional) Integrate [input devices](inputs.md) in the system
 
+### 1. Concrete things to improve
+
+#### Wording
+
+- The opening line, "Hi there! Who do you want to talk to today: a cat, a dog, or a bird?", is too long, so I changed it to: “Pick a friend: cat, dog, or bird.” The animal choices will also be shown on the screen.
+
+The system will use simple keyword matching for `cat`, `dog`, and `bird`. If it hears another word, it will say: “Please say cat, dog, or bird.” If it hears nothing, it will say: “I did not hear anything. Please try again.”
+
+#### Timing(from Part 1: 0.2s cut off my thinking pauses, 1.5s felt hesitant)
+
+I will use one endpointing threshold instead of different thresholds for every question. I will start with approximately **0.8 seconds**, because 0.2 seconds sometimes cut off speech while 1.5 seconds felt too slow.
+
+#### Scope
+
+To keep the prototype reliable, each animal will use a fixed response. The system will not use a language model or support a long open-ended conversation.
+
+This version focuses on testing whether users understand when to speak, whether the system recognizes the animal choices, and whether the timing feels responsive.
+
+### 2. Modes of interaction beyond speech
+
+Speech alone never shows whose turn it is, so the screen and the LED carry the state, and one button gives a way in and a way out that does not depend on recognition.
+
+#### LED: whose turn is it
+
+| LED | State | Meaning |
+|---|---|---|
+| **Off** | Asleep | Nothing is being recorded yet; press the button to start |
+| **Green** | Listening | Your turn |
+| **Amber** | Processing | Transcribing and choosing a reply |
+| **Blue** | Speaking | Its turn |
+
+The LED is readable from across the room, and it answers the two questions that speech cannot: whether the device heard me, and whether it is still working.
+
+#### Screen: what I can say
+
+- **Asleep:** a dim screen with one line, "Press to start", so it is obvious how to begin.
+- **Choose:** the three animals as icons with names. The options live on the screen, so the spoken prompt can stay one short sentence.
+- **Listening:** the current animal with a green frame.
+- **Processing:** the words that were recognized, so a mis-hearing is visible instead of silent.
+- **Speaking:** the animal with the line it is saying, which also helps if the speaker is hard to hear.
+
+#### Button: start and switch
+
+**The button is how the interaction starts.** The device does not listen at all until it is pressed. Pressing it opens the choose screen, and only then does the device say "Pick a friend: cat, dog, or bird" and start listening. Requiring the press makes the beginning unambiguous: nobody has to guess whether it is awake, and nobody is recorded by surprise.
+
+After that, the button always means *go to the next animal* (cat → dog → bird → cat). On the choose screen it picks an animal without speaking, and during a conversation it switches friends. That makes it the escape hatch for the failure my partner hit in Part 1: when recognition keeps missing the animal name, you can press instead of repeating yourself, so the device is never stuck waiting for a word it cannot recognize.
+
+### 3. New script and storyboard
+
+The device sleeps until the button is pressed, showing only "Press to start".
+
+When the button is pressed, the choose screen appears and the device says: “Pick a friend: cat, dog, or bird.”
+
+The user says an animal. The system searches the transcript for the keywords `cat`, `dog`, or `bird`.
+
+Each animal has a fixed personality and a small set of responses:
+
+| Animal | Personality | Example response |
+| --- | --- | --- |
+| Cat, Mochi | Calm and slightly aloof | “Meow. I am Mochi. Was your day good or tiring?” |
+| Dog, Buddy | Energetic and friendly | “Woof! I am Buddy. Did you have a good day?” |
+| Bird, Kiwi | Playful and repetitive | “Tweet! I am Kiwi. Say one word for me to repeat!” |
+
+This helps direct users to answer with sentences with simple keyword such as `good`, `tiring`, `yes`, `no`, or `bye`.
+
+For example:
+
+- If the user says `good`: “I’m glad to hear that!”
+- If the user says `tiring`: “You should take a little rest.”
+- If the user says `yes`: “Yay!”
+- If the user says `no`: “That’s okay.”
+- If the user says `bye`: “Bye! Come back soon.”
+- If the system does not recognize the answer: “Please say good, tiring, yes, no, or bye.”
+
+**Bird is the exception.** When Kiwi is the chosen animal, the system skips the keyword check and simply repeats whatever word it transcribed ("Tweet! <word>!"), because Kiwi's whole game is copying the user. Only `bye` is still treated as a keyword, so there is always a way to end.
+
+#### States that need a rule
+
+| Situation | What the device does |
+|---|---|
+| Nothing recognized, 1st time | Repeats the options: “Please say cat, dog, or bird.” |
+| Nothing recognized, 2nd time | Offers the other way in: “You can also press the button to switch friends.” |
+| Nothing recognized, 3rd time | Goes back to sleep: “I’ll rest. Press to start again.” \[LED off, screen shows "Press to start"\] |
+| Nothing heard at all | “I did not hear anything. Please try again.” (counts toward the same three tries) |
+| User says `bye` | “Bye! Come back soon.” then goes back to sleep, screen shows "Press to start" |
+| Button pressed while asleep | Opens the choose screen and asks “Pick a friend: cat, dog, or bird.” |
+| Button pressed on the choose screen | Picks the next animal directly (cat → dog → bird), no speech needed |
+| Button pressed during a conversation | Switches to the next animal and greets as that animal, cancelling whatever was in progress |
+
+#### Implementation plan for per-animal replies
+
+No language model. Each animal is just **a different Piper voice plus its own set of fixed lines**, which keeps the prototype reliable and fast enough to answer within about a second.
+
+**Storyboard:**
+
 ## Prototype your system
 
 The system should:
