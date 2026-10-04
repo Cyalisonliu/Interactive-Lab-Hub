@@ -1,7 +1,7 @@
 # Chatterboxes
 
-**NAMES OF COLLABORATORS HERE**
-
+<!-- **NAMES OF COLLABORATORS HERE** -->
+<!-- 
 [![Watch the video](https://user-images.githubusercontent.com/1128669/135009222-111fe522-e6ba-46ad-b6dc-d1633d21129c.png)](https://www.youtube.com/embed/Q8FWzLMobx0?start=19)
 
 In this lab, we want you to design interaction with a speech-enabled device — something that listens and talks to you. This device can do anything *but* control lights (since we already did that in Lab 1). First, we want you to storyboard what you imagine the conversational interaction to be like. Then you will use wizarding techniques to elicit examples of what people might say, ask, or respond. We then want you to use the examples collected from at least two other people to inform the redesign of the device.
@@ -32,13 +32,13 @@ pi@ixe00:~/Interactive-Lab-Hub $ git commit -m "get lab3 updates"
 pi@ixe00:~/Interactive-Lab-Hub $ git push
 ```
 
-Option 2: On your own GitHub repo, create a pull request to get updates from the class Interactive-Lab-Hub. After you have the latest updates online, go to your Pi, `cd` to your `Interactive-Lab-Hub` and use `git pull`.
+Option 2: On your own GitHub repo, create a pull request to get updates from the class Interactive-Lab-Hub. After you have the latest updates online, go to your Pi, `cd` to your `Interactive-Lab-Hub` and use `git pull`. -->
 
----
+<!-- --- -->
 
 # Part 1
 
-## Setup
+<!-- ## Setup
 
 Create and activate a virtual environment for this lab:
 
@@ -68,11 +68,11 @@ Then run the setup script, which installs the classic speech synthesizers, downl
 (.venv) $ ./setup.sh
 ```
 
-Check your audio devices before going further. `arecord -l` lists capture devices and `aplay -l` lists playback devices; if your webcam microphone or Bluetooth speaker does not appear, fix that first — every script below assumes the system defaults are the ones you want.
+Check your audio devices before going further. `arecord -l` lists capture devices and `aplay -l` lists playback devices; if your webcam microphone or Bluetooth speaker does not appear, fix that first — every script below assumes the system defaults are the ones you want. -->
 
 ## A. Text to Speech
 
-Your Pi can speak in several quite different ways, and the differences are audible in a way that matters for design. In `speech-scripts/` there are shell scripts for each.
+<!-- Your Pi can speak in several quite different ways, and the differences are audible in a way that matters for design. In `speech-scripts/` there are shell scripts for each.
 
 ### The classic engines
 
@@ -104,7 +104,7 @@ Note that the Piper command line changed in version 1.x — voices are now downl
 (.venv) $ ./piper_demo.sh
 ```
 
-The demo script also shows `--output-raw`, which streams audio to the speaker as it is generated rather than writing a file first. Listen for the difference in how quickly speech begins. In a conversational system this gap is the thing your user experiences as responsiveness.
+The demo script also shows `--output-raw`, which streams audio to the speaker as it is generated rather than writing a file first. Listen for the difference in how quickly speech begins. In a conversational system this gap is the thing your user experiences as responsiveness. -->
 
 \*\***Write your own shell file to use your favorite of these TTS engines to have your Pi greet you by name.**\*\*
 (This shell file should be saved to your own repo for this lab.)
@@ -116,7 +116,7 @@ Piper sounded a little bit warmer and natural. For me, espeack is like a robot s
 
 ## B. Speech to Text
 
-We use [faster-whisper](https://github.com/SYSTRAN/faster-whisper), a reimplementation of OpenAI's Whisper model that runs several times faster on CPU and does not require PyTorch. All processing happens on the Pi; nothing is sent to a server.
+<!-- We use [faster-whisper](https://github.com/SYSTRAN/faster-whisper), a reimplementation of OpenAI's Whisper model that runs several times faster on CPU and does not require PyTorch. All processing happens on the Pi; nothing is sent to a server.
 
 ```
 (.venv) $ python transcribe.py lookdave.wav
@@ -130,16 +130,16 @@ The transcript is not the interesting output here — the timings are. Run it ag
 #  noted that the first run may take longer because the model is downloaded, and that the HF unauthenticated-request warning is expected and not an error.
 ```
 
-Available sizes, smallest first: `tiny.en`, `base.en`, `small.en`, `medium.en`. The `.en` variants are English-only and faster than their multilingual counterparts at the same size.
+Available sizes, smallest first: `tiny.en`, `base.en`, `small.en`, `medium.en`. The `.en` variants are English-only and faster than their multilingual counterparts at the same size. -->
 
 \*\***Record a few seconds of your own speech (`arecord -d 5 -f cd -c 1 -r 16000 test.wav`) and transcribe it with at least two model sizes. Report the real-time factor for each. At what point does the accuracy improvement stop being worth the delay, for a system that has to answer you?**\*\*
-
 
 ![result using tiny.en](imgs/tiny.png)
 ![result using base.en](imgs/base.png)
 ![result using small.en](imgs/small.png)
 
 The results were:
+
 - Tiny.en: real-time factor = 0.18x, transcription time: 0.90s
 - Base.en: real-time factor = 0.33x, transcription time: 1.67s
 - Small.en: real-time factor = 0.98x, transcription time: 4.91s
@@ -147,13 +147,13 @@ The transcript for all was the same: “Today is Sunday.” The main difference 
 
 \*\***Write your own script that verbally asks for a numerical input (a phone number, zipcode, number of pets) and records the answer the respondent provides.**\*\* Numbers are a good stress test — transcription systems make characteristic errors on digit strings, and you will want to know what they are before you design around them.
 
-![Tree models output](imgs/zip_code_result.png)
+![Three models output](imgs/zip_code_result.png)
 
 The system recognized the zip code correctly, but the tiny model inserted spaces between digits (for example, “1 0 0 4 4” instead of “10044”). This may explain why numeric inputs need post-processing or confirmation in a conversational system.
 
 ## C. Turn-taking: knowing when someone has stopped talking
 
-Everything so far has worked on fixed audio files. A real conversational device does not get told when to start and stop recording — it has to decide. This is the problem that makes speech interfaces hard, and it is mostly not a speech recognition problem.
+<!-- Everything so far has worked on fixed audio files. A real conversational device does not get told when to start and stop recording — it has to decide. This is the problem that makes speech interfaces hard, and it is mostly not a speech recognition problem.
 
 We use a **voice activity detector** (VAD) to segment the microphone stream into utterances. `listen.py` runs Silero VAD continuously and hands each detected utterance to faster-whisper:
 
@@ -167,7 +167,7 @@ Speak, pause, and watch it transcribe. Now change the endpointing threshold — 
 ```
 (.venv) $ python listen.py --min-silence 0.2
 (.venv) $ python listen.py --min-silence 1.5
-```
+``` -->
 
 \*\***Try both extremes, and something in between. Describe what each one feels like to talk to. Note specifically: at 0.2s, what kinds of normal speech get cut off? At 1.5s, what does the delay make the system seem like?**\*\*
 
@@ -369,7 +369,7 @@ For example:
 
 #### Implementation plan for per-animal replies
 
-No language model. Each animal is just **a different Piper voice plus its own set of fixed lines**, which keeps the prototype reliable and fast enough to answer within about a second.
+Each animal is just **a different Piper voice plus its own set of fixed lines**, which keeps the prototype reliable and fast enough to answer within about a second.
 
 **Storyboard:**
 
