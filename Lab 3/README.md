@@ -404,7 +404,31 @@ Every turn is logged to `session_log.csv` (time, state, what was heard, what was
 (.venv) $ python pet_bot.py --demo           # type instead of speaking (no hardware)
 ```
 
-*Include videos or screencaptures of both the system and the controller.*
+### Video
+
+[Interaction video](https://drive.google.com/file/d/1kGSbUa7CeYnWcDc2FVC65NPZA7DjhY4R/view?usp=sharing)
+
+### Screen captures
+
+Each capture is the terminal log on the Pi. `[knob]` marks a press of the rotary encoder, and the colour in brackets is the LED state at that moment.
+
+**1. Start: the knob wakes the device, and a cat is chosen by voice.**
+
+![Start](imgs/start.png)
+
+The knob press opens the choose screen. The LED goes blue while the device asks "Pick a friend", green while it listens, then amber while it transcribes. "Give me a cat." contains the keyword `cat`, so Mochi is chosen instantly (reply chosen in 0.00 s).
+
+**2. Conversation: the language model answers sentences without keywords.**
+
+![Conversation](imgs/conversation.png)
+
+These are full sentences rather than short keyword answers, so the language model replies as Buddy, reacting and then asking a question back to keep the conversation going. Short transcripts like "just totally." and "couple." are likely recognition errors from `tiny.en`.
+
+**3. Keyword reply, bye, and starting again with the knob.**
+
+![Switch](imgs/switch.png)
+
+"very tired." matches the `tired` keyword, so Mochi answers with a fixed line instantly, while "but I have an exam tomorrow." goes to the language model. "Okay, bye." ends the conversation and turns the LED off (`[off] Press to start`).
 
 ## Test the system
 I tested the systems with my roommates.
