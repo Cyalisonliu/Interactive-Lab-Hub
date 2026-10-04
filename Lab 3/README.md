@@ -268,7 +268,7 @@ The dialogue felt different when I acted it out with a dog instead of a cat. I o
 ---
 
 # Lab 3 Part 2
-
+<!-- 
 For Part 2, you will redesign the interaction with the speech-enabled device using the data collected, as well as feedback from part 1.
 
 ## Prep for Part 2
@@ -276,7 +276,7 @@ For Part 2, you will redesign the interaction with the speech-enabled device usi
 1. What are concrete things that could use improvement in the design of your device? For example: wording, timing, anticipation of misunderstandings.
 2. What are other modes of interaction *beyond speech* that you might also use to clarify how to interact? In particular: how does someone know when the device is listening, and when it is thinking? You have a screen and an LED.
 3. Make a new storyboard, diagram and/or script based on these reflections.
-4. (optional) Integrate [input devices](inputs.md) in the system
+4. (optional) Integrate [input devices](inputs.md) in the system -->
 
 ### 1. Concrete things to improve
 
@@ -292,7 +292,13 @@ I will use one endpointing threshold instead of different thresholds for every q
 
 #### Scope
 
-To keep the prototype reliable, each animal will use a fixed response. The system will not use a language model or support a long open-ended conversation.
+It is hard to script every answer a person might give, so I adopt a **hybrid** approach:
+
+1. **Fixed responses first.** Short answers that contain a known keyword (`good`, `tired`, `yes`, `no`, `bye`) get a predefined line instantly. This keeps the most common turns fast.
+2. **A small language model for everything else.** Any sentence the keywords do not cover is sent to a small local model (`qwen2.5:0.5b`, running on the Pi through Ollama), which replies in one or two short sentences in the animal's personality.
+3. **Fixed lines as a safety net.** If the model is not running or too slow, the pet falls back to a fixed line, so it never goes silent.
+
+Choosing an animal and saying `bye` always use keywords, never the model, so starting and ending the conversation is reliable.
 
 This version focuses on testing whether users understand when to speak, whether the system recognizes the animal choices, and whether the timing feels responsive.
 
@@ -333,7 +339,7 @@ When the button is pressed, the choose screen appears and the device says: “Pi
 
 The user says an animal. The system searches the transcript for the keywords `cat`, `dog`, or `bird`.
 
-Each animal has a fixed personality and a small set of responses:
+In the beginning of the conversation, each animal has a fixed personality and a small set of responses:
 
 | Animal | Personality | Example response |
 | --- | --- | --- |
@@ -341,73 +347,94 @@ Each animal has a fixed personality and a small set of responses:
 | Dog, Buddy | Energetic and friendly | “Woof! I am Buddy. Did you have a good day?” |
 | Bird, Kiwi | Playful and repetitive | “Tweet! I am Kiwi. Say one word for me to repeat!” |
 
-This helps direct users to answer with sentences with simple keyword such as `good`, `tiring`, `yes`, `no`, or `bye`.
+This helps direct users to answer with simple keywords such as `good`, `tired`, `yes`, `no`, or `bye`. Each keyword also accepts the words people actually used in testing, for example `tired`, `tiring` and `exhausted` all count as tired, and `yeah` counts as yes.
 
-For example:
 
-- If the user says `good`: “I’m glad to hear that!”
-- If the user says `tiring`: “You should take a little rest.”
-- If the user says `yes`: “Yay!”
-- If the user says `no`: “That’s okay.”
-- If the user says `bye`: “Bye! Come back soon.”
-- If the system does not recognize the answer: “Please say good, tiring, yes, no, or bye.”
+**Bird:** Kiwi will copy what the user says. `bye` is always treated as a keyword, so there is always a way to end.
 
-**Bird is the exception.** When Kiwi is the chosen animal, the system skips the keyword check and simply repeats whatever word it transcribed ("Tweet! <word>!"), because Kiwi's whole game is copying the user. Only `bye` is still treated as a keyword, so there is always a way to end.
+Each animal is **a different Piper speaking speed, its own set of fixed lines, and its own personality prompt for the language model**. Keyword answers are instant; model answers usually take about one second on the Pi.
 
 #### States that need a rule
 
 | Situation | What the device does |
 |---|---|
-| Nothing recognized, 1st time | Repeats the options: “Please say cat, dog, or bird.” |
-| Nothing recognized, 2nd time | Offers the other way in: “You can also press the button to switch friends.” |
-| Nothing recognized, 3rd time | Goes back to sleep: “I’ll rest. Press to start again.” \[LED off, screen shows "Press to start"\] |
+| Animal not recognized, 1st time | Repeats the options: “Please say cat, dog, or bird.” |
+| Animal not recognized, 2nd time | Offers the other way in: “You can also press the button to switch friends.” |
+| Animal not recognized, 3rd time | Goes back to sleep: “I’ll rest. Press to start again.” \[LED off, screen shows "Press to start"\] |
 | Nothing heard at all | “I did not hear anything. Please try again.” (counts toward the same three tries) |
+| Sentence without a keyword, during a conversation | The language model answers in the animal's personality |
 | User says `bye` | “Bye! Come back soon.” then goes back to sleep, screen shows "Press to start" |
 | Button pressed while asleep | Opens the choose screen and asks “Pick a friend: cat, dog, or bird.” |
 | Button pressed on the choose screen | Picks the next animal directly (cat → dog → bird), no speech needed |
 | Button pressed during a conversation | Switches to the next animal and greets as that animal, cancelling whatever was in progress |
 
-#### Implementation plan for per-animal replies
-
-Each animal is just **a different Piper voice plus its own set of fixed lines**, which keeps the prototype reliable and fast enough to answer within about a second.
-
 **Storyboard:**
+![New Storyboard](imgs/storyboard2.jpg)
 
 ## Prototype your system
 
-The system should:
+<!-- The system should:
 * use the Raspberry Pi
 * use one or more sensors
-* require participants to speak to it
+* require participants to speak to it -->
 
 *Document how the system works.*
+
+**Hardware:** Raspberry Pi, USB microphone and speaker, the MiniPiTFT screen, and the Adafruit I2C rotary encoder (sensor).
+
+- **Rotary encoder button:** pressing the knob is the start / next-animal button.
+- **Rotary encoder NeoPixel:** the status LED: off = asleep, green = listening, amber = processing, blue = speaking.
+- **Screen:** the animal choices, the current animal, what it is saying, and what was heard.
+
+**Software pipeline (one turn):**
+
+1. Silero VAD listens to the microphone and ends the turn after silence.
+2. faster-whisper (`tiny.en`) transcribes the voice record. *(processing: LED amber)*
+3. `pet_logic.py` decides the reply: keywords first, then the language model (`pet_brain.py`, `qwen2.5:0.5b` via Ollama); otherwise, a fixed fallback to predefined lines.
+4. Piper speaks the reply with the animal's speaking speed. *(speaking: LED blue)*
+5. The microphone ignores its own speaker for 0.4 s, then listens again. *(listening: LED green)*
+
+Every turn is logged to `session_log.csv` (time, state, what was heard, what was said).
+
+**Run it:**
+
+```
+(.venv) $ python pet_bot.py                  # full system on the Pi
+(.venv) $ python pet_bot.py --brain off      # no language model
+(.venv) $ python pet_bot.py --demo           # type instead of speaking (no hardware)
+```
 
 *Include videos or screencaptures of both the system and the controller.*
 
 ## Test the system
-
-Try to get at least two people to interact with your system. (Ideally, you would inform them that there is a wizard *after* the interaction, but we recognize that can be hard.)
-
-Answer the following:
+I tested the systems with my roommates.
 
 ### What worked well about the system and what didn't?
-\*\**your answer here*\*\*
+**Worked well**
+- Choosing an animal by keyword was reliable. Even with a messy transcript, as long as it included `cat`, we recognized it and Mochi appeared right away.
+- Keyword answers were instant (0.00 s to choose a reply), and every turn is logged so people see exactly what the device heard and why it answered the way it did.
+
+**Didn't work well**
+- Speech recognition with `tiny.en` misheard key words: "tiring" was transcribed as "hiring", so the keyword never matched and the conversation went off track.
+- The small language model (`qwen2.5:0.5b`) sometimes gave replies that made little sense ("Hearing is hearing."), and with the delay of processing. It it sometimes felt nonsense and slow.
 
 ### What worked well about the controller and what didn't?
-\*\**your answer here*\*\*
+**Worked well**
+- The rotary encoder's push button made the start of the interaction unambiguous: nothing is recorded until it is pressed, and it is also an alternative that switches animals without depending on speech recognition once the system fails to transcribe.
+- The NeoPixel LED on the encoder made turn-taking visible (green = your turn, amber = processing, blue = speaking), so it was clear when to talk.
+
+**Didn't work well**
+- For the first round, the green color looked blue on the NeoPixel, so "listening" and "speaking" were hard to tell apart, which is somehow confusing.
 
 ### What lessons can you take away from the WoZ interactions for designing a more autonomous version of the system?
-\*\**your answer here*\*\*
+- People do not always answer with the exact words the script expects. They could say "tired", "tiring" or anythin wlse, or added extra words like "Can I do cat?". The autonomous version needs synonyms and keyword search anywhere in a sentence, not exact matching.
+- It is impossible to script every answer, so when designing the system, it may be worth thinking to uses a hybrid approach: fixed lines for keywords, and a language model only for everything else. Starting and ending (choosing an animal, `bye`, the button) must stay rule-based so the user can never get stuck.
+- Timing is also part of the personality. The same pauses felt calm for a cat but awkward for an energetic dog, so recognizing the difference and designing corresponding mechanisms is important.
+
 
 ### How could you use your system to create a dataset of interaction? What other sensing modalities would make sense to capture?
-\*\**your answer here*\*\*
-
-<details>
-  <summary><strong>Submission Cleanup Reminder (Click to Expand)</strong></summary>
-
-  **Before submitting your README.md:**
-  - This readme.md file has a lot of extra text for guidance.
-  - Remove all instructional text and example prompts from this file.
-  - You may either delete these sections or use the toggle/hide feature in VS Code to collapse them for a cleaner look.
-  - Your final submission should be neat, focused on your own work, and easy to read for grading.
-</details>
+- The system logs every turn's metadata to `session_log.csv`. Collected across many users, this shows which phrases people actually use, where recognition fails, and which replies end the conversation. That data could be used to grow the keyword lists or fine-tune the reply model.
+- Saving the raw audio of each voice record next to its transcript would make it possible to measure recognition errors and to compare models like `tiny.en` and `base.en` on real speech instead of a single test sentence.
+- Other modalities worth considering: 
+    - the webcam (whether someone is in front of the device and looking at it, to wake it up or to detect that they walked away instead of waiting for silence), button-press timing (how often people fall back to the button because speech failed).
+    - capture voice features like loudness and speaking speed as a rough signal of the user's mood.

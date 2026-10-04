@@ -8,7 +8,7 @@ The rules it encodes (see the README):
   - the button always means "go to the next animal"
   - three failed tries (nothing heard, or a word that is not a keyword)
     send it back to sleep, so it never loops forever
-  - the bird repeats whatever it heard instead of re-prompting
+  - the bird always repeats what it heard (never the language model)
 """
 
 import random
@@ -41,6 +41,14 @@ ANSWERS = {
     "no": "That's okay.",
 }
 
+# What people actually said in testing: "tired", not "tiring"; "yeah", not "yes".
+SYNONYMS = {
+    "good": {"good", "great", "fine", "nice", "okay", "ok", "happy", "awesome"},
+    "tiring": {"tiring", "tired", "exhausted", "sleepy", "hard", "busy", "stressful"},
+    "yes": {"yes", "yeah", "yep", "sure", "please"},
+    "no": {"no", "nope", "nah"},
+}
+
 GENERIC = {
     "cat": ["Meow. That sounds like a lot.", "Mrrp. Tell me more?",
             "Purr. I am listening."],
@@ -58,6 +66,7 @@ NEGATIONS = {"not", "no", "dont", "never", "nope", "didnt", "wasnt"}
 PROMPT_CHOOSE = "Pick a friend: cat, dog, or bird."
 SLEEP_SCREEN = "Press to start"
 MAX_TRIES = 3
+BIRD_ECHO_WORDS = 5   # Kiwi repeats at most this many of your last words
 
 
 @dataclass
@@ -177,13 +186,19 @@ class PetMachine:
         if "bye" in words:
             return self._sleep("Bye! Come back soon.")
 
+        if self.animal == "bird":
+            # Kiwi's whole game is copying you, so it never uses keywords or
+            # the language model: it repeats what it heard (a few words at most).
+            echo = " ".join(text.strip().rstrip(".!?").split()[-BIRD_ECHO_WORDS:])
+            return self._reply(f"Tweet! {echo}!", text)
+
         # Fast path: a short answer made of one of the keywords is answered
         # instantly, with no model. Longer sentences go to the brain, so a
         # keyword buried in a sentence cannot hijack the reply.
         negated = bool(NEGATIONS & set(words))
         if len(words) <= KEYWORD_MAX_WORDS or self.brain is None:
             for keyword, reply in ANSWERS.items():
-                if keyword in words:
+                if SYNONYMS[keyword] & set(words):
                     if keyword != "no" and negated:
                         break     # "not good" is not a cheerful answer
                     return self._reply(reply, text)
@@ -195,16 +210,11 @@ class PetMachine:
                 return self._reply(free, text)
             # brain unreachable or too slow: fall through to the fixed lines
 
-        if self.animal == "bird":
-            # Kiwi copies instead of complaining: any word is a valid answer.
-            word = words[-1] if words else ""
-            return self._reply(f"Tweet! {word}!", text)
-
         if self.brain is not None:
             return self._reply(_generic(self.animal), text)
 
         return self._fail(
-            "Please say good, tiring, yes, no, or bye.",
+            "Please say good, tired, yes, no, or bye.",
             "You can also press the button to switch friends.",
             heard=text,
         )

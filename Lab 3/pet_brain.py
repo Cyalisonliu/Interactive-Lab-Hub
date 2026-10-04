@@ -6,7 +6,9 @@ Only the standard library is used, so nothing new goes in requirements.txt.
     ollama pull qwen2.5:0.5b        # or llama3.2:1b if the Pi keeps up
 
 Design notes:
-  - Replies are capped at one short sentence (`num_predict`), because a long
+  - Uses the chat API with example turns, and asks the model to react and
+    then ask one short question back, so it feels like a conversation.
+  - Replies are capped at about 20 words (`num_predict`), because a long
     reply on a Pi means a long silence before the pet says anything.
   - Every call has a timeout. If the model is missing, busy or slow, reply()
     returns None and the pet falls back to its fixed lines, so the interaction
@@ -23,24 +25,46 @@ DEFAULT_URL = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen2.5:0.5b"
 
 PERSONAS = {
-    "cat": ("You are Mochi, a calm, slightly aloof cat talking to a tired student. "
-            "Start replies with a soft cat sound sometimes."),
-    "dog": ("You are Buddy, an excited, warm dog talking to a student. "
-            "Be enthusiastic and encouraging."),
-    "bird": ("You are Kiwi, a playful bird who likes repeating words back. "
-             "Be silly and short."),
+    "cat": ("You are Mochi, a calm, slightly aloof cat. You are chatting with a "
+            "student who just came home. You may start with a soft meow."),
+    "dog": ("You are Buddy, an excited, warm dog. You are chatting with a student "
+            "who just came home. You are enthusiastic and encouraging."),
+    "bird": ("You are Kiwi, a playful, silly bird chatting with a student."),
 }
 
-STYLE = ("Reply with ONE short sentence, at most 15 words. "
-         "Answer what the student just said, and stay on that topic. "
+STYLE = ("This is a spoken conversation, so keep it short and natural. "
+         "First react to exactly what the student just said, in one short sentence. "
+         "Then ask them one short, simple question about it, so the conversation "
+         "keeps going. At most 20 words in total. "
          "Never use emoji, lists, or stage directions. Speak only as the animal.")
+
+# Example exchanges shown to the model before the real conversation. Small models
+# copy the shape of examples much better than they follow written rules.
+EXAMPLES = {
+    "cat": [
+        ("I had a math exam today.",
+         "Meow. Exams sound exhausting. Do you think it went well?"),
+        ("I think so, but I am hungry.",
+         "Purr. Food first, then a nap. What will you eat?"),
+    ],
+    "dog": [
+        ("I had a math exam today.",
+         "Woof! You must have worked so hard! Was it difficult?"),
+        ("A little, but I finished it.",
+         "Arf! You finished it, that is amazing! Want to celebrate?"),
+    ],
+    "bird": [
+        ("I had a math exam today.",
+         "Tweet! Math exam, math exam! Was it a scary one?"),
+    ],
+}
 
 
 class OllamaBrain:
     """reply(animal, text, history) -> str, or None when the model can't answer."""
 
     def __init__(self, model: str = DEFAULT_MODEL, url: str = DEFAULT_URL,
-                 timeout: float = 12.0, max_tokens: int = 40) -> None:
+                 timeout: float = 12.0, max_tokens: int = 50) -> None:
         self.model = model
         self.url = url.rstrip("/")
         self.timeout = timeout
@@ -73,39 +97,72 @@ class OllamaBrain:
 
     # -- the part the state machine calls ---------------------------------
 
-    def build_prompt(self, text: str, history) -> str:
-        lines = []
+    def build_messages(self, animal: str | None, text: str, history) -> list[dict]:
+        """Chat-format messages: persona, example turns, real history, new line."""
+        animal = animal if animal in PERSONAS else "cat"
+        messages = [{"role": "system", "content": f"{PERSONAS[animal]} {STYLE}"}]
+        for said, replied in EXAMPLES.get(animal, []):
+            messages.append({"role": "user", "content": said})
+            messages.append({"role": "assistant", "content": replied})
         for said, replied in history:
             # An empty "said" is the opening greeting: there was no question yet.
-            lines.append(f"Student: {said}\nYou: {replied}" if said else f"You: {replied}")
-        lines.append(f"Student: {text}\nYou:")
-        return "\n".join(lines)
+            if said:
+                messages.append({"role": "user", "content": said})
+            messages.append({"role": "assistant", "content": replied})
+        messages.append({"role": "user", "content": text})
+        return messages
 
     def reply(self, animal: str | None, text: str, history) -> str | None:
-        persona = PERSONAS.get(animal or "cat", PERSONAS["cat"])
-        data = self._post("/api/generate", {
+        data = self._post("/api/chat", {
             "model": self.model,
-            "system": f"{persona} {STYLE}",
-            "prompt": self.build_prompt(text, history),
+            "messages": self.build_messages(animal, text, history),
             "stream": False,
-            "options": {"num_predict": self.max_tokens, "temperature": 0.8},
+            "options": {"num_predict": self.max_tokens, "temperature": 0.7},
         })
         if not data:
             return None
-        return clean(data.get("response", ""))
+        return clean((data.get("message") or {}).get("content", ""))
+
+
+SMART_PUNCTUATION = {
+    "\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"',
+    "\u2013": "-", "\u2014": "-", "\u2026": "...", "\u00a0": " ",
+}
+
+
+def to_ascii(text: str) -> str:
+    """Curly quotes -> straight ones, and drop emoji or other non-ASCII.
+
+    The Pi's terminal could not print the model's \u2019 and crashed, and
+    Piper reads plain ASCII most reliably anyway.
+    """
+    for fancy, plain in SMART_PUNCTUATION.items():
+        text = text.replace(fancy, plain)
+    return text.encode("ascii", "ignore").decode()
 
 
 def clean(raw: str) -> str | None:
-    """One sentence, no quotes, no stage directions, short enough to say."""
-    text = re.sub(r"\*[^*]*\*", " ", raw)            # drop *purrs softly*
+    """Up to three short sentences (a sound, a reaction, a question).
+
+    A reply that is only an animal sound ("Meow.", "Moo.") says nothing, so it
+    returns None and the pet uses one of its fixed lines instead.
+    """
+    text = re.sub(r"\*[^*]*\*", " ", to_ascii(raw))  # drop *purrs softly*
+    text = re.sub(r"^(you|mochi|buddy|kiwi|assistant)\s*:\s*", "", text.strip(), flags=re.I)
     text = " ".join(text.split()).strip().strip('"').strip()
-    end = re.search(r"[.!?]", text)
-    if end:
-        text = text[:end.end()]
+    sentences = re.findall(r"[^.!?]+(?:[.!?]+|$)", text) or ([text] if text else [])
+    kept = []
+    for sentence in sentences[:3]:
+        if kept and len(" ".join(kept + [sentence]).split()) > 20:
+            break                                     # keep whole sentences only
+        kept.append(sentence.strip())
+    text = " ".join(kept)
     words = text.split()
     if len(words) > 20:
         text = " ".join(words[:20]).rstrip(",.") + "."
-    return text or None
+    if len(words) < 3:
+        return None                                   # only a sound, not an answer
+    return text
 
 
 def make_brain(mode: str, model: str = DEFAULT_MODEL, url: str = DEFAULT_URL):

@@ -7,11 +7,13 @@
 
 The dialogue rules live in pet_logic.py and are unit tested. This file only
 connects them to hardware: microphone (Silero VAD + faster-whisper), speaker
-(Piper), the MiniPiTFT screen, and button A on GPIO 23.
+(Piper), the MiniPiTFT screen, button A on GPIO 23, and the Adafruit I2C
+rotary encoder (seesaw, address 0x36).
 
-The MiniPiTFT has no separate LED, so the "LED" is a colour bar across the top
-of the screen: off = asleep, green = your turn, amber = working, blue = it is
-speaking.
+Pressing the knob does the same thing as button A. The knob's NeoPixel is the
+LED from the README: off = asleep, green = your turn, amber = working,
+blue = it is speaking. The same colour is also drawn as a bar across the top
+of the screen, so the device still works if the knob is unplugged.
 """
 
 import argparse
@@ -27,7 +29,10 @@ from pet_logic import PETS, SLEEP_SCREEN, PetMachine
 SAMPLE_RATE = 16000
 # Extra silence after the pet finishes speaking, before the microphone is
 # switched back on, so the tail of the speaker is not heard as a new turn.
-SELF_HEAR_GUARD = 0.4
+SELF_HEAR_GUARD = 0.8
+# Right after the pet speaks, an empty transcript is almost always its own
+# echo, not the user, so it is not counted as a failed try.
+ECHO_WINDOW = 2.0
 LAB_DIR = Path(__file__).resolve().parent
 DEFAULT_VAD = LAB_DIR / "models" / "silero_vad.onnx"
 DEFAULT_VOICE = LAB_DIR / "voices" / "en_US-lessac-medium.onnx"
@@ -74,6 +79,7 @@ class Screen:
 
     def __init__(self) -> None:
         self.display = None
+        self.led_hook = None      # called with the LED colour on every update
         try:
             import board
             import digitalio
@@ -108,6 +114,8 @@ class Screen:
     def show(self, led: str, main: str, heard: str = "",
              state: str | None = None, animal: str | None = None) -> None:
         print(f"  [{led:5}] {main}" + (f"   heard: {heard}" if heard else ""))
+        if self.led_hook is not None:
+            self.led_hook(led)
         if self.display is None:
             return
         image = self.render(led, main, heard, state, animal)
@@ -190,6 +198,72 @@ class Button:
         return clicked
 
 
+class Knob:
+    """Adafruit I2C rotary encoder: its push button and its NeoPixel LED.
+
+    Optional. If it is unplugged, or a loose wire makes I2C fail mid-run, it
+    switches itself off with one message and the rest keeps working.
+    """
+
+    ADDRESS = 0x36
+    BUTTON_PIN = 24
+    PIXEL_PIN = 6
+    BRIGHTNESS = 0.3
+    # Pure colours: a NeoPixel mixes channels, so the screen's teal-ish green
+    # (0, 170, 80) looked blue on the LED. Each state gets one clear hue here.
+    COLORS = {
+        "off": (0, 0, 0),
+        "green": (0, 255, 0),
+        "amber": (255, 90, 0),
+        "blue": (0, 0, 255),
+    }
+
+    def __init__(self) -> None:
+        self.ok = False
+        self.was_down = False
+        self.current = None
+        try:
+            import board
+            from adafruit_seesaw import digitalio, neopixel, seesaw
+
+            ss = seesaw.Seesaw(board.I2C(), addr=self.ADDRESS)
+            ss.pin_mode(self.BUTTON_PIN, ss.INPUT_PULLUP)
+            self.button = digitalio.DigitalIO(ss, self.BUTTON_PIN)
+            self.pixel = neopixel.NeoPixel(ss, self.PIXEL_PIN, 1)
+            self.pixel.brightness = self.BRIGHTNESS
+            self.ok = True
+            print("(knob found at 0x36: press = button, NeoPixel = LED)")
+        except ImportError:
+            print("(no knob: pip install adafruit-circuitpython-seesaw)")
+        except Exception as exc:
+            print(f"(no knob at 0x36: {exc}) — using button A only")
+
+    def _give_up(self, exc: Exception) -> None:
+        print(f"(knob stopped responding: {exc}) — check the I2C wires")
+        self.ok = False
+
+    def pressed(self) -> bool:
+        if not self.ok:
+            return False
+        try:
+            down = not self.button.value       # active low
+        except Exception as exc:
+            self._give_up(exc)
+            return False
+        clicked = down and not self.was_down
+        self.was_down = down
+        return clicked
+
+    def set_led(self, name: str) -> None:
+        if not self.ok or name == self.current:
+            return                              # skip repeat I2C writes
+        try:
+            self.pixel.fill(self.COLORS.get(name, (0, 0, 0)))
+            self.current = name
+        except Exception as exc:
+            self._give_up(exc)
+
+
 class Speaker:
     """Piper, with a per-animal speaking rate."""
 
@@ -244,6 +318,23 @@ def _fit(text: str, limit: int) -> str:
     """Trim a line so it fits the 240 px screen."""
     text = text.strip()
     return text if len(text) <= limit else text[: limit - 1] + "\u2026"
+
+
+def _words(text: str) -> list[str]:
+    return "".join(c.lower() if c.isalnum() else " " for c in text).split()
+
+
+def is_own_echo(heard: str, last_said: str) -> bool:
+    """True when the transcript is mostly the line the pet just said.
+
+    Needs at least 3 words, so a short real answer that happens to reuse a
+    word from the question ("tiring" after "good or tiring?") still counts.
+    """
+    heard_words, said_words = _words(heard), set(_words(last_said))
+    if len(heard_words) < 3 or not said_words:
+        return False
+    overlap = sum(w in said_words for w in heard_words) / len(heard_words)
+    return overlap >= 0.6
 
 
 def log_turn(heard: str, said: str | None, state: str) -> None:
@@ -305,7 +396,8 @@ def run_on_pi(args) -> None:
     print("Loading models...", flush=True)
     recognizer = WhisperModel(args.model, device="cpu", compute_type="int8")
     speaker = Speaker(args.voice)
-    screen, button = Screen(), Button()
+    screen, button, knob = Screen(), Button(), Knob()
+    screen.led_hook = knob.set_led
     machine = PetMachine(brain=make_brain(args.brain, args.llm_model, args.llm_url))
 
     config = sherpa_onnx.VadModelConfig()
@@ -316,11 +408,22 @@ def run_on_pi(args) -> None:
     window = config.silero_vad.window_size
 
     screen.show(machine.led, SLEEP_SCREEN)
-    print(f"Ready. Press button A to start (endpointing after {args.min_silence}s).\n")
+    print(f"Ready. Press the knob or button A to start "
+          f"(endpointing after {args.min_silence}s).\n")
+    try:
+        _listen_loop(args, machine, screen, button, knob, recognizer, speaker,
+                     vad, window, np, sd)
+    finally:
+        knob.set_led("off")       # do not leave the LED glowing after Ctrl+C
+
+
+def _listen_loop(args, machine, screen, button, knob, recognizer, speaker,
+                 vad, window, np, sd) -> None:
 
     buffer = np.empty(0, dtype=np.float32)
     samples_per_read = int(0.1 * SAMPLE_RATE)
     ignore_until = 0.0        # audio recorded before this time is the pet itself
+    last_said, spoke_at = "", 0.0
 
     with sd.InputStream(channels=1, dtype="float32", samplerate=SAMPLE_RATE) as stream:
 
@@ -332,18 +435,31 @@ def run_on_pi(args) -> None:
             otherwise the pet answers its own voice. The stream keeps running
             throughout: stopping and restarting it left some devices deaf.
             """
-            nonlocal buffer, ignore_until
+            nonlocal buffer, ignore_until, last_said, spoke_at
             if response.say:
                 screen.show(response.led, response.say, response.heard_text,
                             machine.state, response.animal or machine.animal)
                 try:
+                    t2 = time.perf_counter()
                     speaker.say(response.say, response.animal)
+                    print(f"  spoke in {time.perf_counter() - t2:.2f}s")
                     log_turn(response.heard_text, response.say, machine.state)
                 finally:
-                    ignore_until = time.monotonic() + SELF_HEAR_GUARD
+                    # Audio recorded while it was talking is still queued in
+                    # the input stream: read it out and throw it away.
+                    try:
+                        queued = stream.read_available
+                        if queued:
+                            stream.read(queued)
+                    except Exception:
+                        pass
+                    ignore_until = time.monotonic() + args.echo_guard
+                    last_said, spoke_at = response.say, time.monotonic()
                     buffer = np.empty(0, dtype=np.float32)
                     while not vad.empty():
                         vad.pop()
+                    if hasattr(vad, "reset"):
+                        vad.reset()       # forget a half-detected echo
             screen.show(machine.led, machine.screen, "", machine.state,
                         machine.animal)
 
@@ -360,8 +476,10 @@ def run_on_pi(args) -> None:
                     muted = " (ignoring: pet is talking)" if time.monotonic() < ignore_until else ""
                     print(f"  [debug] {machine.state:8} mic {level:.4f} |{bar}{muted}")
 
-            if button.pressed():
-                print("  [button]")
+            # Read both every loop so each one keeps track of its own release.
+            clicked_a, clicked_knob = button.pressed(), knob.pressed()
+            if clicked_a or clicked_knob:
+                print("  [knob]" if clicked_knob else "  [button]")
                 respond(machine.press())
                 continue
 
@@ -390,11 +508,26 @@ def run_on_pi(args) -> None:
                 heard = " ".join(s.text.strip() for s in segments)
                 print(f'  heard "{heard}" in {time.perf_counter() - t0:.2f}s')
 
+                just_spoke = time.monotonic() - spoke_at < ECHO_WINDOW
+                if is_own_echo(heard, last_said) or (not heard and just_spoke):
+                    print("  (ignored: that was the pet's own voice)")
+                    screen.show(machine.led, machine.screen, "", machine.state,
+                                machine.animal)
+                    continue
+
+                t1 = time.perf_counter()
                 response = machine.hear(heard) if heard else machine.nothing_heard()
+                print(f"  reply chosen in {time.perf_counter() - t1:.2f}s")
                 respond(response)
 
 
 def main() -> None:
+    # Never crash just because the terminal cannot print a character.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):
+            pass
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--demo", action="store_true",
@@ -402,6 +535,10 @@ def main() -> None:
     parser.add_argument("--model", default="tiny.en", help="whisper model size")
     parser.add_argument("--vad-model", type=Path, default=DEFAULT_VAD)
     parser.add_argument("--voice", type=Path, default=DEFAULT_VOICE)
+    parser.add_argument("--echo-guard", type=float, default=SELF_HEAR_GUARD,
+                        help="seconds the mic is ignored after the pet speaks "
+                             f"(default: {SELF_HEAR_GUARD}); raise it if the pet "
+                             "still hears itself")
     parser.add_argument("--min-silence", type=float, default=0.8,
                         help="seconds of silence that end a turn (default: 0.8)")
     parser.add_argument("--brain", choices=["auto", "ollama", "off"], default="auto",
